@@ -18,12 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('overlay-box');
     
     // --- Máquina de Estados ---
-    const AppState = { /* ... (sin cambios) ... */ };
+    const AppState = {
+        INIT: 'INIT',
+        AWAITING_FRONT: 'AWAITING_FRONT',
+        FRONT_CAPTURED: 'FRONT_CAPTURED',
+        AWAITING_BACK: 'AWAITING_BACK',
+        BACK_CAPTURED: 'BACK_CAPTURED',
+        ALL_CAPTURED: 'ALL_CAPTURED',
+        PROCESS_COMPLETE: 'PROCESS_COMPLETE'
+    };
     let currentState = AppState.INIT;
     let currentStream = null;
     let systemReadyTimeout = null;
 
-    // --- Funciones de Lógica Principal ---
+    // --- Lógica de UI ---
 
     function updateUIForState() {
         [captureUiWrapper, previewsContainer, mainControls, finalControls, secondaryActionBtn, setupControls].forEach(el => el.classList.add('hidden'));
@@ -52,13 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 mainControls.classList.remove('hidden');
                 previewsContainer.classList.remove('hidden');
                 secondaryActionBtn.classList.remove('hidden');
-                captureUiWrapper.classList.remove('hidden'); // Muestra video y controles de cámara
                 primaryActionBtn.textContent = currentState === AppState.FRONT_CAPTURED ? 'Aceptar Frente' : 'Aceptar Reverso';
                 secondaryActionBtn.textContent = currentState === AppState.FRONT_CAPTURED ? 'Reintentar Frente' : 'Reintentar Reverso';
                 primaryActionBtn.disabled = false;
                 secondaryActionBtn.disabled = false;
                 showMessage(`Verifique la captura del ${currentState === AppState.FRONT_CAPTURED ? 'FRENTE' : 'REVERSO'}.`);
-                video.classList.add('hidden'); // Oculta el video para ver la preview
                 break;
                 
             case AppState.ALL_CAPTURED:
@@ -66,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 previewsContainer.classList.remove('hidden');
                 primaryActionBtn.textContent = 'Enviar a BDR';
                 primaryActionBtn.disabled = false;
-                showMessage("✅ Capturas completadas. Listo para enviar.");
+                showMessage("✅ Capturas completadas.");
                 break;
 
             case AppState.PROCESS_COMPLETE:
@@ -75,18 +81,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 showMessage("🚀 Proceso finalizado con éxito.");
                 break;
         }
+        checkOrientation();
     }
 
     function captureImage(side) {
         if (video.readyState < video.HAVE_METADATA) return;
         const targetCanvas = (side === 'front') ? canvasFront : canvasBack;
-        // ... (lógica de dibujo en canvas sin cambios)
+        const ctx = targetCanvas.getContext('2d');
+        const videoRect = video.getBoundingClientRect();
+        const overlayRect = overlay.getBoundingClientRect();
+        const scaleX = video.videoWidth / videoRect.width;
+        const scaleY = video.videoHeight / videoRect.height;
+        const cropX = (overlayRect.left - videoRect.left) * scaleX;
+        const cropY = (overlayRect.top - videoRect.top) * scaleY;
+        const cropWidth = overlayRect.width * scaleX;
+        const cropHeight = overlayRect.height * scaleY;
+        targetCanvas.width = cropWidth;
+        targetCanvas.height = cropHeight;
+        ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         clearTimeout(systemReadyTimeout);
         currentState = (side === 'front') ? AppState.FRONT_CAPTURED : AppState.BACK_CAPTURED;
         updateUIForState();
     }
 
-    // --- Funciones de Soporte y UI ---
+    // --- Funciones de Soporte ---
+
+    const isLandscape = () => window.innerWidth > window.innerHeight;
     
     function resetSystemState() {
         clearTimeout(systemReadyTimeout);
@@ -102,9 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateButtonState();
         }, 2500);
     }
-
-    const isLandscape = () => window.innerWidth > window.innerHeight;
-
+    
     function updateButtonState() {
         const isCaptureState = currentState === AppState.AWAITING_FRONT || currentState === AppState.AWAITING_BACK;
         if (isLandscape() && isCaptureState && overlay.classList.contains('is-ready')) {
@@ -120,27 +138,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function getCameras() {
-        // ... (sin cambios)
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        if (videoDevices.length === 0) throw new Error("No se encontraron cámaras.");
+        cameraSelect.innerHTML = videoDevices.map((device, i) => {
+            const label = device.label || `Cámara ${i + 1}`;
+            const selected = label.toLowerCase().includes('back') || label.toLowerCase().includes('trasera') ? 'selected' : '';
+            return `<option value="${device.deviceId}" ${selected}>${label}</option>`;
+        }).join('');
     }
 
     async function startCamera() {
         if (currentStream) currentStream.getTracks().forEach(track => track.stop());
         try {
             const deviceId = cameraSelect.value;
-            // ... (constraints sin cambios)
+            const constraints = { video: { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 }, focusMode: { ideal: 'continuous' } } };
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = currentStream;
             await new Promise(resolve => video.onloadedmetadata = resolve);
             currentState = AppState.AWAITING_FRONT;
             updateUIForState();
         } catch (err) {
-            // ... (manejo de error sin cambios)
+            showMessage(`Error al iniciar cámara: ${err.name}`);
+            currentState = AppState.INIT;
+            updateUIForState();
         }
     }
 
-    function showMessage(text) {
-        messageDiv.textContent = text || "";
-    }
+    function showMessage(text) { messageDiv.textContent = text || ""; }
 
     // --- Event Handlers ---
 
@@ -148,11 +173,16 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (currentState) {
             case AppState.INIT: startCamera(); break;
             case AppState.AWAITING_FRONT: captureImage('front'); break;
-            case AppState.FRONT_CAPTURED:
-                currentState = AppState.AWAITING_BACK;
+            case AppState.FRONT_CAPTURED: currentState = AppState.AWAITING_BACK; updateUIForState(); break;
+            case AppState.AWAITING_BACK: captureImage('back'); break;
+            case AppState.BACK_CAPTURED: currentState = AppState.ALL_CAPTURED; updateUIForState(); break;
+            case AppState.ALL_CAPTURED:
+                const downloadCanvas = (canvas, filename) => { const l=document.createElement('a');l.download=filename;l.href=canvas.toDataURL('image/png');l.click();};
+                downloadCanvas(canvasFront, `ID_${docType.value}_FRENTE.png`);
+                setTimeout(() => downloadCanvas(canvasBack, `ID_${docType.value}_REVERSO.png`), 500);
+                currentState = AppState.PROCESS_COMPLETE;
                 updateUIForState();
                 break;
-            // ... (resto de los casos sin cambios)
         }
     });
 
@@ -166,19 +196,18 @@ document.addEventListener('DOMContentLoaded', () => {
             currentStream.getTracks().forEach(track => track.stop());
             currentStream = null;
         }
-        [canvasFront, canvasBack].forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
+        [canvasFront, canvasBack].forEach(c => { const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); });
         currentState = AppState.INIT;
         updateUIForState();
     });
 
-    cameraSelect.addEventListener('change', () => {
-        // Si estamos en un estado de captura, reinicia la cámara con la nueva selección
-        if(currentState === AppState.AWAITING_FRONT || currentState === AppState.AWAITING_BACK) {
-            startCamera();
-        }
+    cameraSelect.addEventListener('change', startCamera);
+    docType.addEventListener('change', () => {
+        overlay.classList.toggle('overlay-ine', docType.value === 'ine');
+        overlay.classList.toggle('overlay-passport', docType.value === 'passport');
     });
 
-    // ... (resto de los listeners sin cambios)
+    window.addEventListener('resize', checkOrientation);
 
     // --- Inicialización ---
     async function main() {
