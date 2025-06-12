@@ -44,10 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (currentState) {
             case AppState.INIT:
                 setupControls.classList.remove('hidden');
-                showMessage("Seleccione opciones e inicie la cámara.");
-                primaryActionBtn.textContent = 'Iniciar Cámara'; // Botón para iniciar
                 mainControls.classList.remove('hidden');
+                primaryActionBtn.textContent = 'Iniciar Captura';
                 primaryActionBtn.disabled = false;
+                showMessage("Seleccione cámara y tipo de documento.");
                 break;
             
             case AppState.AWAITING_FRONT:
@@ -131,16 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkOrientation() {
-        // CORREGIDO: La lógica estaba invertida.
         const isLandscape = window.innerWidth > window.innerHeight;
-        rotateOverlay.classList.toggle('hidden', isLandscape);
+        rotateOverlay.classList.toggle('hidden', !isLandscape);
 
-        if (!isLandscape) {
+        const isCaptureState = currentState === AppState.AWAITING_FRONT || currentState === AppState.AWAITING_BACK;
+
+        if (!isLandscape && isCaptureState) {
             primaryActionBtn.disabled = true;
-        } else {
-            if ((currentState === AppState.AWAITING_FRONT || currentState === AppState.AWAITING_BACK) && overlay.classList.contains('is-ready')) {
-                primaryActionBtn.disabled = false;
-            }
+        } else if (isLandscape && isCaptureState && overlay.classList.contains('is-ready')) {
+            primaryActionBtn.disabled = false;
         }
     }
 
@@ -176,6 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showMessage(text, type = 'info') {
         messageDiv.textContent = text;
+        if (!text) {
+             messageDiv.style.border = '1px solid transparent';
+             return;
+        }
         const style = type === 'error' ? 'error' : 'warning';
         messageDiv.style.backgroundColor = `var(--${style}-bg)`;
         messageDiv.style.borderColor = `var(--${style}-border)`;
@@ -214,21 +217,26 @@ document.addEventListener('DOMContentLoaded', () => {
     newIdBtn.addEventListener('click', () => {
         [canvasFront, canvasBack].forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
         currentState = AppState.INIT;
-        if(currentStream) {
-            currentState = AppState.AWAITING_FRONT;
-        }
         updateUIForState();
     });
 
-    logoutBtn.addEventListener('click', () => { /* ... (sin cambios) ... */ });
-    docType.addEventListener('change', () => { /* ... (sin cambios) ... */ });
+    logoutBtn.addEventListener('click', () => {
+         showMessage("Cerrando sesión...");
+         [mainControls, finalControls, previewsContainer, captureArea, setupControls].forEach(el => el.classList.add('hidden'));
+    });
+
+    docType.addEventListener('change', () => {
+        overlay.classList.toggle('overlay-ine', docType.value === 'ine');
+        overlay.classList.toggle('overlay-passport', docType.value === 'passport');
+    });
+
     window.addEventListener('resize', checkOrientation);
 
     // --- Inicialización ---
     async function main() {
         try {
             await getCameras();
-            updateUIForState(); // Muestra la UI inicial con el botón "Iniciar Cámara"
+            updateUIForState();
         } catch (err) {
             showMessage(err.message, 'error');
         }
