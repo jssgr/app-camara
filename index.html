@@ -14,67 +14,71 @@
 
     <div id="rotate-device-overlay" class="hidden">
         <div class="rotate-device-content">
-            <img src="/rotate.png" alt="Girar dispositivo" />
+            <img src="rotate.png" alt="Girar dispositivo" />
             <p>Para la mejor calidad, por favor gire su dispositivo.</p>
         </div>
     </div>
 
     <div class="main-container">
-        <div id="capture-column">
-            <h2>Captura de Identificación</h2>
-            <div id="capture-ui-wrapper" class="hidden">
-                <div id="camera-controls" class="controls">
-                    <div class="control-group">
-                        <label for="cameraSelect">Cámara Activa</label>
-                        <select id="cameraSelect"></select>
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo BDR IC" class="app-logo">
+        </div>
+        <div class="content-columns">
+            <div id="capture-column">
+                <div class="header-controls">
+                    <h2>Captura de Identificación</h2>
+                    <div id="camera-controls" class="controls">
+                        <div class="control-group">
+                            <label for="cameraSelect">Cámara Activa</label>
+                            <select id="cameraSelect"></select>
+                        </div>
                     </div>
                 </div>
-                <div id="capture-area">
-                    <video id="video" autoplay playsinline></video>
-                    <div id="overlay-box" class="overlay-box overlay-ine"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="side-panel">
-            <div id="setup-controls" class="controls">
-                <div class="control-group">
-                    <label for="docType">Tipo de Documento</label>
-                    <select id="docType">
-                        <option value="ine">INE</option>
-                        <option value="passport">Pasaporte</option>
-			            <option value="license">Licencia de conducir</option>
-                        <option value="old_citizen">INAPAM</option>
-                    </select>
+                <div id="capture-ui-wrapper" class="hidden">
+                    <div id="capture-area">
+                        <video id="video" autoplay playsinline></video>
+                        <div id="overlay-box" class="overlay-box overlay-ine"></div>
+                    </div>
                 </div>
             </div>
 
-          
-            <div id="message"></div>
-
-            <div id="main-controls" class="button-group">
-                <button id="primary-action-btn"></button>
-                <button id="secondary-action-btn" class="secondary hidden"></button>
-            </div>
-
-            <div id="final-controls" class="button-group hidden">
-                <button id="new-id-btn">Capturar Nuevo ID</button>
-                <button id="logout-btn" class="secondary">Salir</button>
-            </div>
-
-            <div id="previews-container" class="hidden">
-                <div class="preview-wrapper">
-                    <label>Frente</label>
-                    <canvas id="canvas-front"></canvas>
+            <div id="side-panel">
+                <div id="setup-controls" class="controls">
+                    <div class="control-group">
+                        <label for="docType">Tipo de Documento</label>
+                        <select id="docType">
+                            <option value="ine">INE</option>
+                            <option value="passport">Pasaporte</option>
+                            <option value="license">Licencia de conducir</option>
+                            <option value="old_citizen">INAPAM</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="preview-wrapper">
-                    <label>Reverso</label>
-                    <canvas id="canvas-back"></canvas>
+
+              
+                <div id="message"></div>
+
+                <div id="main-controls" class="button-group">
+                    <button id="primary-action-btn"></button>
+                    <button id="secondary-action-btn" class="secondary hidden"></button>
+                </div>
+
+                <div id="final-controls" class="button-group hidden">
+                    <button id="new-id-btn">Capturar Nuevo ID</button>
+                    <button id="logout-btn" class="secondary">Salir</button>
+                </div>
+
+                <div id="previews-container" class="hidden">
+                    <div class="preview-wrapper">
+                        <label>Frente</label>
+                        <canvas id="canvas-front"></canvas>
+                    </div>
+                    <div class="preview-wrapper">
+                        <label>Reverso</label>
+                        <canvas id="canvas-back"></canvas>
+                    </div>
                 </div>
             </div>
-
-
-
         </div>
     </div>
 

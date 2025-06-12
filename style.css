@@ -34,10 +34,33 @@ body {
     height: 95vh;
     box-sizing: border-box;
     display: flex;
-    flex-direction: row;
-    gap: 20px;
+    /* MODIFICADO: Ahora la dirección es columna para apilar el logo y el contenido */
+    flex-direction: column;
+    gap: 15px; /* Espacio entre el logo y el contenido */
     overflow: hidden;
 }
+
+/* =========== NUEVAS REGLAS PARA EL LOGO =========== */
+.logo-container {
+    width: 100%;
+    flex-shrink: 0; /* Evita que el contenedor del logo se encoja */
+}
+
+.app-logo {
+    height: 40px; /* Ajusta la altura de tu logo */
+    width: auto;  /* Mantiene la proporción */
+}
+
+/* Contenedor para las dos columnas principales */
+.content-columns {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    height: 100%;
+    overflow: hidden;
+}
+/* =================================================== */
+
 
 #capture-column {
     flex: 2;
@@ -47,6 +70,32 @@ body {
     overflow-y: auto;
     max-height: 100%;
 }
+
+/* =========== NUEVAS REGLAS PARA EL ENCABEZADO DE CAPTURA =========== */
+.header-controls {
+    display: flex;
+    justify-content: space-between; /* Alinea los elementos a los extremos */
+    align-items: center; /* Centra verticalmente */
+    width: 100%;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.header-controls h2 {
+    margin: 0; /* Elimina márgenes del h2 */
+    flex-shrink: 0;
+}
+
+.header-controls .controls {
+    margin: 0; /* Elimina márgenes del contenedor de controles */
+    min-width: 250px; /* Ancho mínimo para el selector */
+}
+/* =============================================================== */
+
+#capture-ui-wrapper {
+    width: 100%;
+}
+
 
 #side-panel {
     flex: 1;
@@ -61,24 +110,20 @@ body {
 
 h2 {
     color: var(--text-color);
-    margin-top: 0;
-    margin-bottom: 20px;
     font-weight: 700;
-    text-align: center;
+    text-align: left; /* Alineado a la izquierda por defecto ahora */
 }
 
 .controls {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
 }
 
 .control-group {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 300px;
 }
 
 .control-group label {
@@ -147,7 +192,6 @@ video { width: 100%; display: block; }
     margin-bottom: 5px;
 }
 
-/* Canvas con altura controlada */
 #previews-container canvas {
     width: 100%;
     border-radius: 8px;
@@ -228,12 +272,22 @@ button.secondary:not(:disabled):hover {
     display: none !important;
 }
 
-/* Responsive en móviles */
 @media (max-width: 768px) {
     .main-container {
         flex-direction: column;
         height: auto;
         padding: 15px;
+    }
+
+    /* MODIFICADO: El contenedor de columnas también debe ser vertical en móviles */
+    .content-columns {
+        flex-direction: column;
+    }
+
+    /* MODIFICADO: El encabezado de captura también se adapta */
+    .header-controls {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     #previews-container canvas {
