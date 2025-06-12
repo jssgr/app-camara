@@ -1,0 +1,7 @@
+# Ignorar los archivos .zip
+*.zip
+
+# Ignorar la basura de Windows que se cuela a mi WSL
+*.identifier
+*.IDENTIFIER
+

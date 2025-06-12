@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Captura de Identificación para OCR</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="rotate-device-overlay" class="hidden">
+        <div class="rotate-device-content">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yLjUgMnY2aDZNMjEuNSAyMnYtNmgLTYTTIyIDExLjVBMTAgMTAgMCAwIDAgMy41IDEyLjUiLz48L3N2Zz4=" alt="Girar dispositivo" />
+            <p>Para la mejor calidad, por favor gire su dispositivo.</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <h2>Captura de Identificación</h2>
+
+        <div id="setup-controls" class="controls hidden">
+            <div class="control-group">
+                <label for="cameraSelect">Cámara</label>
+                <select id="cameraSelect"></select>
+            </div>
+            <div class="control-group">
+                <label for="docType">Documento</label>
+                <select id="docType">
+                    <option value="ine">INE</option>
+                    <option value="passport">Pasaporte</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="message"></div>
+
+        <div id="capture-area" class="hidden">
+            <video id="video" autoplay playsinline></video>
+            <div id="overlay-box" class="overlay-box"></div>
+        </div>
+
+        <div id="previews-container" class="hidden">
+            <div class="preview-wrapper">
+                <label>Frente</label>
+                <canvas id="canvas-front"></canvas>
+            </div>
+            <div class="preview-wrapper">
+                <label>Reverso</label>
+                <canvas id="canvas-back"></canvas>
+            </div>
+        </div>
+
+        <div id="main-controls" class="button-group hidden">
+            <button id="secondary-action-btn" class="secondary"></button>
+            <button id="primary-action-btn"></button>
+        </div>
+
+        <div id="final-controls" class="button-group hidden">
+            <button id="new-id-btn">Capturar Nuevo ID</button>
+            <button id="logout-btn" class="secondary">Salir</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
