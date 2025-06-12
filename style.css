@@ -15,26 +15,28 @@ body {
     font-family: 'Roboto', sans-serif;
     background-color: var(--background-color);
     margin: 0;
-    padding: 20px;
+    padding: 0;
+    box-sizing: border-box;
+    min-height: 100vh;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    box-sizing: border-box;
 }
 
 .main-container {
     background-color: var(--container-bg);
-    padding: 30px;
+    padding: 20px;
     border-radius: 16px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 1200px;
+    height: 95vh;
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
-    gap: 30px;
-    align-items: flex-start;
+    gap: 20px;
+    overflow: hidden;
 }
 
 #capture-column {
@@ -42,6 +44,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-y: auto;
+    max-height: 100%;
 }
 
 #side-panel {
@@ -50,12 +54,9 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    height: 100%;
-    min-height: 500px;
-
-    /* NUEVO: limitar altura y permitir scroll si es necesario */
+    max-height: 100%;
     overflow-y: auto;
-    max-height: 90vh;
+    gap: 20px;
 }
 
 h2 {
@@ -132,7 +133,6 @@ video { width: 100%; display: block; }
     display: flex;
     flex-direction: column;
     gap: 15px;
-    margin-top: 20px;
 }
 
 .preview-wrapper {
@@ -147,7 +147,7 @@ video { width: 100%; display: block; }
     margin-bottom: 5px;
 }
 
-/* AJUSTADO: limitar altura de los canvas */
+/* Canvas con altura controlada */
 #previews-container canvas {
     width: 100%;
     border-radius: 8px;
@@ -160,8 +160,7 @@ video { width: 100%; display: block; }
 
 #message {
     font-size: 15px;
-    margin-top: auto;
-    padding-top: 20px;
+    padding-top: 10px;
 }
 
 .button-group {
@@ -169,7 +168,6 @@ video { width: 100%; display: block; }
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 20px;
 }
 
 button {
@@ -230,9 +228,20 @@ button.secondary:not(:disabled):hover {
     display: none !important;
 }
 
-/* 📱 Responsive: reducir altura canvas en móviles */
+/* Responsive en móviles */
 @media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+        height: auto;
+        padding: 15px;
+    }
+
     #previews-container canvas {
         max-height: 100px;
+    }
+
+    #side-panel {
+        width: 100%;
+        max-height: none;
     }
 }

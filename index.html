@@ -43,8 +43,23 @@
                     <select id="docType">
                         <option value="ine">INE</option>
                         <option value="passport">Pasaporte</option>
+			            <option value="license">Licencia de conducir</option>
+                        <option value="old_citizen">INAPAM</option>
                     </select>
                 </div>
+            </div>
+
+          
+            <div id="message"></div>
+
+            <div id="main-controls" class="button-group">
+                <button id="primary-action-btn"></button>
+                <button id="secondary-action-btn" class="secondary hidden"></button>
+            </div>
+
+            <div id="final-controls" class="button-group hidden">
+                <button id="new-id-btn">Capturar Nuevo ID</button>
+                <button id="logout-btn" class="secondary">Salir</button>
             </div>
 
             <div id="previews-container" class="hidden">
@@ -57,18 +72,9 @@
                     <canvas id="canvas-back"></canvas>
                 </div>
             </div>
-            
-            <div id="message"></div>
 
-            <div id="main-controls" class="button-group">
-                <button id="primary-action-btn"></button>
-                <button id="secondary-action-btn" class="secondary hidden"></button>
-            </div>
 
-            <div id="final-controls" class="button-group hidden">
-                <button id="new-id-btn">Capturar Nuevo ID</button>
-                <button id="logout-btn" class="secondary">Salir</button>
-            </div>
+
         </div>
     </div>
 
