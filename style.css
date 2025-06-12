@@ -34,68 +34,82 @@ body {
     height: 95vh;
     box-sizing: border-box;
     display: flex;
-    /* MODIFICADO: Ahora la dirección es columna para apilar el logo y el contenido */
     flex-direction: column;
-    gap: 15px; /* Espacio entre el logo y el contenido */
     overflow: hidden;
 }
 
-/* =========== NUEVAS REGLAS PARA EL LOGO =========== */
-.logo-container {
-    width: 100%;
-    flex-shrink: 0; /* Evita que el contenedor del logo se encoja */
+/* =========== REGLAS PARA EL NUEVO ENCABEZADO Y FOOTER =========== */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .app-logo {
-    height: 40px; /* Ajusta la altura de tu logo */
-    width: auto;  /* Mantiene la proporción */
+    height: 40px;
+    width: auto;
 }
 
-/* Contenedor para las dos columnas principales */
+.header-left h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.header-right {
+    min-width: 250px;
+}
+
 .content-columns {
     display: flex;
     flex-direction: row;
     gap: 20px;
-    height: 100%;
+    flex-grow: 1; /* Hace que este contenedor ocupe el espacio disponible */
     overflow: hidden;
 }
-/* =================================================== */
 
+.app-footer {
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 12px;
+    color: var(--secondary-color);
+    flex-shrink: 0;
+}
+
+.app-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.app-footer a:hover {
+    text-decoration: underline;
+}
+/* =============================================================== */
 
 #capture-column {
     flex: 2;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    /* Se elimina align-items: center para que el marco ocupe todo el ancho */
     overflow-y: auto;
     max-height: 100%;
 }
 
-/* =========== NUEVAS REGLAS PARA EL ENCABEZADO DE CAPTURA =========== */
-.header-controls {
-    display: flex;
-    justify-content: space-between; /* Alinea los elementos a los extremos */
-    align-items: center; /* Centra verticalmente */
-    width: 100%;
-    margin-bottom: 20px;
-    gap: 20px;
-}
-
-.header-controls h2 {
-    margin: 0; /* Elimina márgenes del h2 */
-    flex-shrink: 0;
-}
-
-.header-controls .controls {
-    margin: 0; /* Elimina márgenes del contenedor de controles */
-    min-width: 250px; /* Ancho mínimo para el selector */
-}
-/* =============================================================== */
-
 #capture-ui-wrapper {
     width: 100%;
+    margin-top: 20px; /* Espacio para que no se pegue al marco de la cámara */
 }
-
 
 #side-panel {
     flex: 1;
@@ -108,16 +122,9 @@ body {
     gap: 20px;
 }
 
-h2 {
-    color: var(--text-color);
-    font-weight: 700;
-    text-align: left; /* Alineado a la izquierda por defecto ahora */
-}
-
 .controls {
     width: 100%;
-    display: flex;
-    justify-content: center;
+    margin: 0;
 }
 
 .control-group {
@@ -274,20 +281,23 @@ button.secondary:not(:disabled):hover {
 
 @media (max-width: 768px) {
     .main-container {
-        flex-direction: column;
         height: auto;
         padding: 15px;
     }
 
-    /* MODIFICADO: El contenedor de columnas también debe ser vertical en móviles */
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
     .content-columns {
         flex-direction: column;
     }
 
-    /* MODIFICADO: El encabezado de captura también se adapta */
-    .header-controls {
-        flex-direction: column;
-        align-items: flex-start;
+    #capture-ui-wrapper {
+        margin-top: 0;
     }
 
     #previews-container canvas {

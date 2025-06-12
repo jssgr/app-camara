@@ -20,20 +20,20 @@
     </div>
 
     <div class="main-container">
-        <div class="logo-container">
-            <img src="logo.png" alt="Logo BDR IC" class="app-logo">
-        </div>
+        <header class="app-header">
+            <div class="header-left">
+                <img src="logo.png" alt="Logo BDR IC" class="app-logo">
+                <h2>Captura de Identificación</h2>
+            </div>
+            <div id="camera-controls" class="controls header-right">
+                <div class="control-group">
+                    <label for="cameraSelect">Cámara Activa</label>
+                    <select id="cameraSelect"></select>
+                </div>
+            </div>
+        </header>
         <div class="content-columns">
             <div id="capture-column">
-                <div class="header-controls">
-                    <h2>Captura de Identificación</h2>
-                    <div id="camera-controls" class="controls">
-                        <div class="control-group">
-                            <label for="cameraSelect">Cámara Activa</label>
-                            <select id="cameraSelect"></select>
-                        </div>
-                    </div>
-                </div>
                 <div id="capture-ui-wrapper" class="hidden">
                     <div id="capture-area">
                         <video id="video" autoplay playsinline></video>
@@ -55,7 +55,6 @@
                     </div>
                 </div>
 
-              
                 <div id="message"></div>
 
                 <div id="main-controls" class="button-group">
@@ -80,7 +79,11 @@
                 </div>
             </div>
         </div>
-    </div>
+
+        <footer class="app-footer">
+            <p>Sus datos personales están protegidos. Para más información, visite nuestra <a href="https://bdric.com" target="_blank" rel="noopener noreferrer">política de privacidad</a>.</p>
+        </footer>
+        </div>
 
     <script src="script.js"></script>
 </body>
