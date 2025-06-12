@@ -20,48 +20,55 @@
     </div>
 
     <div class="main-container">
-        <h2>Captura de Identificación</h2>
-
-        <div id="setup-controls" class="controls hidden">
-            <div class="control-group">
-                <label for="cameraSelect">Cámara</label>
-                <select id="cameraSelect"></select>
-            </div>
-            <div class="control-group">
-                <label for="docType">Documento</label>
-                <select id="docType">
-                    <option value="ine">INE</option>
-                    <option value="passport">Pasaporte</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="message"></div>
-
-        <div id="capture-area" class="hidden">
-            <video id="video" autoplay playsinline></video>
-            <div id="overlay-box" class="overlay-box overlay-ine"></div>
-        </div>
-
-        <div id="previews-container" class="hidden">
-            <div class="preview-wrapper">
-                <label>Frente</label>
-                <canvas id="canvas-front"></canvas>
-            </div>
-            <div class="preview-wrapper">
-                <label>Reverso</label>
-                <canvas id="canvas-back"></canvas>
+        <div id="capture-column">
+            <h2>Captura de Identificación</h2>
+            <div id="capture-ui-wrapper" class="hidden">
+                <div id="camera-controls" class="controls">
+                    <div class="control-group">
+                        <label for="cameraSelect">Cámara</label>
+                        <select id="cameraSelect"></select>
+                    </div>
+                </div>
+                <div id="capture-area">
+                    <video id="video" autoplay playsinline></video>
+                    <div id="overlay-box" class="overlay-box overlay-ine"></div>
+                </div>
             </div>
         </div>
 
-        <div id="main-controls" class="button-group hidden">
-            <button id="secondary-action-btn" class="secondary"></button>
-            <button id="primary-action-btn"></button>
-        </div>
+        <div id="side-panel">
+            <div id="setup-controls" class="controls">
+                <div class="control-group">
+                    <label for="docType">Tipo de Documento</label>
+                    <select id="docType">
+                        <option value="ine">INE</option>
+                        <option value="passport">Pasaporte</option>
+                    </select>
+                </div>
+            </div>
 
-        <div id="final-controls" class="button-group hidden">
-            <button id="new-id-btn">Capturar Nuevo ID</button>
-            <button id="logout-btn" class="secondary">Salir</button>
+            <div id="previews-container" class="hidden">
+                <div class="preview-wrapper">
+                    <label>Frente</label>
+                    <canvas id="canvas-front"></canvas>
+                </div>
+                <div class="preview-wrapper">
+                    <label>Reverso</label>
+                    <canvas id="canvas-back"></canvas>
+                </div>
+            </div>
+            
+            <div id="message"></div>
+
+            <div id="main-controls" class="button-group">
+                <button id="primary-action-btn"></button>
+                <button id="secondary-action-btn" class="secondary hidden"></button>
+            </div>
+
+            <div id="final-controls" class="button-group hidden">
+                <button id="new-id-btn">Capturar Nuevo ID</button>
+                <button id="logout-btn" class="secondary">Salir</button>
+            </div>
         </div>
     </div>
 
