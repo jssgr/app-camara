@@ -15,13 +15,14 @@ body {
     font-family: 'Roboto', sans-serif;
     background-color: var(--background-color);
     margin: 0;
-    padding: 0;
+    padding: 20px; /* Añadido para que la tarjeta no se pegue a los bordes */
     box-sizing: border-box;
-    min-height: 100vh;
-    height: 100vh;
+    /* =========== MODIFICADO PARA EL SCROLL UNIFICADO =========== */
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Alinea la tarjeta arriba para permitir scroll */
+    min-height: 100vh;
+    height: auto;
 }
 
 .main-container {
@@ -31,14 +32,13 @@ body {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 1200px;
-    height: 95vh;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    /* Se elimina la altura fija y el overflow para que el scroll lo controle el body */
 }
 
-/* =========== REGLAS PARA EL NUEVO ENCABEZADO Y FOOTER =========== */
+/* Encabezado con Logo, Título y Selector */
 .app-header {
     display: flex;
     justify-content: space-between;
@@ -56,7 +56,7 @@ body {
 }
 
 .app-logo {
-    height: 40px;
+    height: 35px; /* Reducido un poco como mencionaste */
     width: auto;
 }
 
@@ -71,16 +71,32 @@ body {
     min-width: 250px;
 }
 
+/* Contenedor de las dos columnas de contenido */
 .content-columns {
     display: flex;
     flex-direction: row;
     gap: 20px;
-    flex-grow: 1; /* Hace que este contenedor ocupe el espacio disponible */
-    overflow: hidden;
+    padding-top: 20px; /* Espacio debajo del header */
 }
 
+/* =========== COLUMNAS SIN SCROLL INDIVIDUAL =========== */
+#capture-column {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+}
+
+#side-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Pie de página */
 .app-footer {
     padding-top: 15px;
+    margin-top: auto; /* Empuja el footer hacia abajo */
     border-top: 1px solid var(--border-color);
     text-align: center;
     font-size: 12px;
@@ -95,31 +111,10 @@ body {
 .app-footer a:hover {
     text-decoration: underline;
 }
-/* =============================================================== */
-
-#capture-column {
-    flex: 2;
-    display: flex;
-    flex-direction: column;
-    /* Se elimina align-items: center para que el marco ocupe todo el ancho */
-    overflow-y: auto;
-    max-height: 100%;
-}
+/* ====================================================== */
 
 #capture-ui-wrapper {
     width: 100%;
-    margin-top: 20px; /* Espacio para que no se pegue al marco de la cámara */
-}
-
-#side-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    max-height: 100%;
-    overflow-y: auto;
-    gap: 20px;
 }
 
 .controls {
@@ -280,32 +275,28 @@ button.secondary:not(:disabled):hover {
 }
 
 @media (max-width: 768px) {
+    body {
+        padding: 0; /* Sin padding en moviles para que ocupe toda la pantalla */
+    }
+    
     .main-container {
-        height: auto;
-        padding: 15px;
+        border-radius: 0;
+        min-height: 100vh;
     }
 
     .app-header {
         flex-direction: column;
         align-items: flex-start;
-        border-bottom: none;
-        padding-bottom: 0;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 15px;
     }
 
     .content-columns {
         flex-direction: column;
-    }
-
-    #capture-ui-wrapper {
-        margin-top: 0;
+        padding-top: 15px;
     }
 
     #previews-container canvas {
         max-height: 100px;
-    }
-
-    #side-panel {
-        width: 100%;
-        max-height: none;
     }
 }
