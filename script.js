@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Elementos del DOM ---
+    // --- Elementos del DOM (sin cambios) ---
     const primaryActionBtn = document.getElementById('primary-action-btn');
     const secondaryActionBtn = document.getElementById('secondary-action-btn');
     const cameraSelect = document.getElementById('cameraSelect');
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay-box');
     
-    // --- Máquina de Estados ---
+    // --- Máquina de Estados (sin cambios) ---
     const AppState = {
         INIT: 'INIT',
         AWAITING_FRONT: 'AWAITING_FRONT',
@@ -31,8 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentStream = null;
     let systemReadyTimeout = null;
 
-    // --- Lógica de UI ---
-
+    // --- Lógica de UI (sin cambios) ---
     function updateUIForState() {
         [captureUiWrapper, previewsContainer, mainControls, finalControls, secondaryActionBtn, setupControls].forEach(el => el.classList.add('hidden'));
         showMessage("");
@@ -104,8 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUIForState();
     }
 
-    // --- Funciones de Soporte ---
-
+    // --- Funciones de Soporte (sin cambios) ---
     const isLandscape = () => window.innerWidth > window.innerHeight;
     
     function resetSystemState() {
@@ -138,72 +136,91 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function getCameras() {
+        // --- MODIFICADO: Esta función ahora se llama DESPUÉS de obtener el primer permiso ---
+        if (!navigator.mediaDevices?.enumerateDevices) {
+            throw new Error("La enumeración de dispositivos no es soportada en este navegador.");
+        }
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         if (videoDevices.length === 0) throw new Error("No se encontraron cámaras.");
+        
+        const currentSelected = cameraSelect.value;
         cameraSelect.innerHTML = videoDevices.map((device, i) => {
             const label = device.label || `Cámara ${i + 1}`;
-            // Prioriza la cámara trasera por defecto
-            const selected = label.toLowerCase().includes('back') || label.toLowerCase().includes('trasera') ? 'selected' : '';
-            return `<option value="${device.deviceId}" ${selected}>${label}</option>`;
+            return `<option value="${device.deviceId}">${label}</option>`;
         }).join('');
+        
+        // Intenta pre-seleccionar la cámara trasera si está disponible
+        const backCamera = videoDevices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('trasera'));
+        if (backCamera) {
+            cameraSelect.value = backCamera.deviceId;
+        } else if (currentSelected) {
+            cameraSelect.value = currentSelected;
+        }
     }
 
-    // --- MODIFICADO: Función startCamera con manejo de errores avanzado y fallback ---
-    async function startCamera(useFallback = false) {
+    // --- MODIFICADO: Función startCamera ahora usa restricciones genéricas la primera vez ---
+    async function startCamera() {
         if (currentStream) {
             currentStream.getTracks().forEach(track => track.stop());
         }
 
-        const deviceId = cameraSelect.value;
-        const idealConstraints = { 
-            video: { 
-                deviceId: { exact: deviceId }, 
-                width: { ideal: 1920 }, 
-                height: { ideal: 1080 },
-                focusMode: { ideal: 'continuous' } 
-            } 
-        };
-        const fallbackConstraints = { video: true }; // Constraints más simples para el fallback
-        const constraints = useFallback ? fallbackConstraints : idealConstraints;
+        let constraints;
+        // Si es la primera vez que pedimos la cámara, usamos una restricción genérica.
+        if (currentState === AppState.INIT) {
+            constraints = {
+                video: {
+                    facingMode: { ideal: 'environment' }, // Pide la cámara trasera de forma genérica
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
+            };
+        } else {
+            // Si ya tenemos permiso y solo estamos cambiando de cámara, usamos el deviceId exacto.
+            constraints = {
+                video: {
+                    deviceId: { exact: cameraSelect.value },
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
+            };
+        }
 
         try {
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = currentStream;
             await new Promise(resolve => video.onloadedmetadata = resolve);
 
+            // Solo si es la primera vez, poblamos el selector de cámaras ahora que tenemos permiso
+            if (currentState === AppState.INIT) {
+                await getCameras();
+                // Asegurarse de que el selector refleje la cámara activa actual
+                const currentTrack = currentStream.getVideoTracks()[0];
+                const currentDeviceId = currentTrack.getSettings().deviceId;
+                if(currentDeviceId) cameraSelect.value = currentDeviceId;
+            }
+
             currentState = AppState.AWAITING_FRONT;
             updateUIForState();
 
         } catch (err) {
             console.error("Error al iniciar la cámara:", err.name, err.message);
-
+            // El manejo de errores específico sigue siendo válido
             switch (err.name) {
                 case 'NotAllowedError':
                     showMessage("Permiso de cámara denegado. Por favor, revisa los permisos para este sitio en los ajustes de tu navegador (usualmente en el ícono 🔒) y recarga la página.");
                     break;
-                
                 case 'NotFoundError':
-                    if (!useFallback) {
-                        console.log("Cámara ideal no encontrada, intentando fallback...");
-                        showMessage("No se pudo iniciar la cámara preferida. Intentando con otra cámara disponible...");
-                        startCamera(true); // Llama recursivamente con la estrategia de fallback
-                        return; // Evita que el estado se resetee inmediatamente
-                    } else {
-                        showMessage("No se encontró ninguna cámara compatible en este dispositivo.");
-                    }
+                    showMessage("No se encontró ninguna cámara compatible en este dispositivo.");
                     break;
-
                 case 'NotReadableError':
                 case 'AbortError':
                     showMessage("Hubo un problema con tu cámara. Asegúrate de que no esté siendo usada por otra aplicación y recarga la página.");
                     break;
-
-                default:
-                    showMessage("Ocurrió un error inesperado al iniciar la cámara.");
+                default: // Incluye OverconstrainedError que podría ocurrir si las resoluciones no son soportadas
+                    showMessage("No se pudo iniciar la cámara. Puede que no sea compatible con las resoluciones solicitadas.");
                     break;
             }
-            // Si hay un error, resetea al estado inicial
             currentState = AppState.INIT;
             updateUIForState();
         }
@@ -211,15 +228,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showMessage(text) { messageDiv.textContent = text || ""; }
 
-    // --- Event Handlers ---
-
+    // --- Event Handlers (con cambios menores) ---
     primaryActionBtn.addEventListener('click', () => {
         switch (currentState) {
             case AppState.INIT:
-                // --- NUEVO: Guía de permisos proactiva ---
                 showMessage("¡Todo listo! A continuación, tu navegador te pedirá permiso para usar la cámara. Por favor, selecciona 'Permitir'.");
-                setTimeout(() => startCamera(false), 100); // Inicia con el intento ideal (no fallback)
+                setTimeout(startCamera, 100);
                 break;
+            // El resto de los casos no cambian
             case AppState.AWAITING_FRONT: captureImage('front'); break;
             case AppState.FRONT_CAPTURED: currentState = AppState.AWAITING_BACK; updateUIForState(); break;
             case AppState.AWAITING_BACK: captureImage('back'); break;
@@ -245,11 +261,14 @@ document.addEventListener('DOMContentLoaded', () => {
             currentStream = null;
         }
         [canvasFront, canvasBack].forEach(c => { const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); });
+        cameraSelect.innerHTML = ''; // Limpia el selector de cámaras
         currentState = AppState.INIT;
         updateUIForState();
     });
 
-    cameraSelect.addEventListener('change', () => startCamera(false)); // Inicia con el intento ideal al cambiar de cámara
+    // --- MODIFICADO: El evento 'change' ahora simplemente llama a startCamera. ---
+    cameraSelect.addEventListener('change', startCamera);
+
     docType.addEventListener('change', () => {
         const doc = docType.value;
         overlay.classList.toggle('overlay-ine', doc === 'ine' || doc === 'license' || doc === 'old_citizen');
@@ -258,9 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', checkOrientation);
 
-    // --- Inicialización ---
-    async function main() {
-        // --- NUEVO: Verificación de compatibilidad del navegador ---
+    // --- Inicialización (se elimina la llamada inicial a getCameras) ---
+    function main() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             showMessage("Tu navegador no es compatible con la captura de video. Por favor, utiliza un navegador moderno como Chrome o Firefox.");
             primaryActionBtn.disabled = true;
@@ -270,13 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
             primaryActionBtn.textContent = 'Iniciar Captura';
             return;
         }
-
-        try {
-            await getCameras();
-            updateUIForState();
-        } catch (err) {
-            showMessage("No se pudieron detectar cámaras. " + err.message);
-        }
+        updateUIForState();
     }
     
     main();
