@@ -143,23 +143,67 @@ document.addEventListener('DOMContentLoaded', () => {
         if (videoDevices.length === 0) throw new Error("No se encontraron cámaras.");
         cameraSelect.innerHTML = videoDevices.map((device, i) => {
             const label = device.label || `Cámara ${i + 1}`;
+            // Prioriza la cámara trasera por defecto
             const selected = label.toLowerCase().includes('back') || label.toLowerCase().includes('trasera') ? 'selected' : '';
             return `<option value="${device.deviceId}" ${selected}>${label}</option>`;
         }).join('');
     }
 
-    async function startCamera() {
-        if (currentStream) currentStream.getTracks().forEach(track => track.stop());
+    // --- MODIFICADO: Función startCamera con manejo de errores avanzado y fallback ---
+    async function startCamera(useFallback = false) {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+
+        const deviceId = cameraSelect.value;
+        const idealConstraints = { 
+            video: { 
+                deviceId: { exact: deviceId }, 
+                width: { ideal: 1920 }, 
+                height: { ideal: 1080 },
+                focusMode: { ideal: 'continuous' } 
+            } 
+        };
+        const fallbackConstraints = { video: true }; // Constraints más simples para el fallback
+        const constraints = useFallback ? fallbackConstraints : idealConstraints;
+
         try {
-            const deviceId = cameraSelect.value;
-            const constraints = { video: { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 }, focusMode: { ideal: 'continuous' } } };
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = currentStream;
             await new Promise(resolve => video.onloadedmetadata = resolve);
+
             currentState = AppState.AWAITING_FRONT;
             updateUIForState();
+
         } catch (err) {
-            showMessage(`Error al iniciar cámara: ${err.name}`);
+            console.error("Error al iniciar la cámara:", err.name, err.message);
+
+            switch (err.name) {
+                case 'NotAllowedError':
+                    showMessage("Permiso de cámara denegado. Por favor, revisa los permisos para este sitio en los ajustes de tu navegador (usualmente en el ícono 🔒) y recarga la página.");
+                    break;
+                
+                case 'NotFoundError':
+                    if (!useFallback) {
+                        console.log("Cámara ideal no encontrada, intentando fallback...");
+                        showMessage("No se pudo iniciar la cámara preferida. Intentando con otra cámara disponible...");
+                        startCamera(true); // Llama recursivamente con la estrategia de fallback
+                        return; // Evita que el estado se resetee inmediatamente
+                    } else {
+                        showMessage("No se encontró ninguna cámara compatible en este dispositivo.");
+                    }
+                    break;
+
+                case 'NotReadableError':
+                case 'AbortError':
+                    showMessage("Hubo un problema con tu cámara. Asegúrate de que no esté siendo usada por otra aplicación y recarga la página.");
+                    break;
+
+                default:
+                    showMessage("Ocurrió un error inesperado al iniciar la cámara.");
+                    break;
+            }
+            // Si hay un error, resetea al estado inicial
             currentState = AppState.INIT;
             updateUIForState();
         }
@@ -171,7 +215,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     primaryActionBtn.addEventListener('click', () => {
         switch (currentState) {
-            case AppState.INIT: startCamera(); break;
+            case AppState.INIT:
+                // --- NUEVO: Guía de permisos proactiva ---
+                showMessage("¡Todo listo! A continuación, tu navegador te pedirá permiso para usar la cámara. Por favor, selecciona 'Permitir'.");
+                setTimeout(() => startCamera(false), 100); // Inicia con el intento ideal (no fallback)
+                break;
             case AppState.AWAITING_FRONT: captureImage('front'); break;
             case AppState.FRONT_CAPTURED: currentState = AppState.AWAITING_BACK; updateUIForState(); break;
             case AppState.AWAITING_BACK: captureImage('back'); break;
@@ -201,21 +249,33 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUIForState();
     });
 
-    cameraSelect.addEventListener('change', startCamera);
+    cameraSelect.addEventListener('change', () => startCamera(false)); // Inicia con el intento ideal al cambiar de cámara
     docType.addEventListener('change', () => {
-        overlay.classList.toggle('overlay-ine', docType.value === 'ine');
-        overlay.classList.toggle('overlay-passport', docType.value === 'passport');
+        const doc = docType.value;
+        overlay.classList.toggle('overlay-ine', doc === 'ine' || doc === 'license' || doc === 'old_citizen');
+        overlay.classList.toggle('overlay-passport', doc === 'passport');
     });
 
     window.addEventListener('resize', checkOrientation);
 
     // --- Inicialización ---
     async function main() {
+        // --- NUEVO: Verificación de compatibilidad del navegador ---
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showMessage("Tu navegador no es compatible con la captura de video. Por favor, utiliza un navegador moderno como Chrome o Firefox.");
+            primaryActionBtn.disabled = true;
+            docType.disabled = true;
+            setupControls.classList.remove('hidden');
+            mainControls.classList.remove('hidden');
+            primaryActionBtn.textContent = 'Iniciar Captura';
+            return;
+        }
+
         try {
             await getCameras();
             updateUIForState();
         } catch (err) {
-            showMessage(err.message);
+            showMessage("No se pudieron detectar cámaras. " + err.message);
         }
     }
     
