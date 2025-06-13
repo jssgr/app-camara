@@ -1,7 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Constantes de configuración ---
-    const BRILLO_THRESHOLD = 235; // De 0 a 255. Un píxel se considera "quemado" si todos sus componentes (R,G,B) superan este valor.
-    const AREA_REFLEJO_THRESHOLD = 0.05; // Porcentaje (de 0 a 100). Si más de este % de la imagen son píxeles quemados, se considera reflejo.
+    // --- MODIFICADO: Nuevas constantes para el detector de luminancia ---
+    // Este es el umbral para la SUMA de R+G+B. El máximo es 765 (255+255+255).
+    // Un valor más bajo es más sensible a brillos sutiles.
+    const UMBRAL_SUMA_DE_BRILLO = 650; 
+
+    // Este sigue siendo el porcentaje del área. Lo mantengo en tu último valor.
+    const AREA_REFLEJO_THRESHOLD = 0.05; 
 
     // --- Elementos del DOM (sin cambios) ---
     const primaryActionBtn = document.getElementById('primary-action-btn');
@@ -9,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cameraSelect = document.getElementById('cameraSelect');
     const docType = document.getElementById('docType');
     const messageDiv = document.getElementById('message');
-    // ... (el resto de los elementos del DOM sin cambios)
     const rotateOverlay = document.getElementById('rotate-device-overlay');
     const mainControls = document.getElementById('main-controls');
     const finalControls = document.getElementById('final-controls');
@@ -68,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 secondaryActionBtn.textContent = currentState === AppState.FRONT_CAPTURED ? 'Reintentar Frente' : 'Reintentar Reverso';
                 primaryActionBtn.disabled = false;
                 secondaryActionBtn.disabled = false;
-                // El mensaje se establece después del análisis de reflejos en captureImage()
                 break;
                 
             case AppState.ALL_CAPTURED:
@@ -88,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkOrientation();
     }
 
-    // --- NUEVA FUNCIÓN: Analizador de reflejos ---
+    // --- MODIFICADO: La función ahora usa la suma de los componentes de color ---
     function analizarReflejos(canvas) {
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -99,20 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
-            // Si el píxel es muy brillante (casi blanco), contarlo.
-            if (r > BRILLO_THRESHOLD && g > BRILLO_THRESHOLD && b > BRILLO_THRESHOLD) {
+            // Si la suma de los componentes es muy alta, es un píxel brillante.
+            if ((r + g + b) > UMBRAL_SUMA_DE_BRILLO) {
                 brightPixels++;
             }
         }
 
         const totalPixels = canvas.width * canvas.height;
         const percentage = (brightPixels / totalPixels) * 100;
-        console.log(`Análisis de reflejos: ${percentage.toFixed(2)}% de píxeles brillantes.`);
+        console.log(`Análisis de reflejos: ${percentage.toFixed(2)}% de píxeles brillantes (Umbral: ${AREA_REFLEJO_THRESHOLD}%)`);
         return percentage > AREA_REFLEJO_THRESHOLD;
     }
 
 
-    // --- MODIFICADO: La función captureImage ahora llama al analizador de reflejos ---
     function captureImage(side) {
         if (video.readyState < video.HAVE_METADATA) return;
         const targetCanvas = (side === 'front') ? canvasFront : canvasBack;
@@ -131,9 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(systemReadyTimeout);
         
         currentState = (side === 'front') ? AppState.FRONT_CAPTURED : AppState.BACK_CAPTURED;
-        updateUIForState(); // Llama a updateUI primero para mostrar botones
+        updateUIForState(); 
 
-        // Ahora, analiza la imagen y muestra un mensaje si es necesario
         if (analizarReflejos(targetCanvas)) {
             const sideText = side === 'front' ? 'FRENTE' : 'REVERSO';
             showMessage(`⚠️ Posible reflejo detectado en la captura del ${sideText}. Intente de nuevo con una luz más suave o un ángulo diferente.`);
