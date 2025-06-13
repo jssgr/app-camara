@@ -1,3 +1,5 @@
+//jesus@garciarod.com 20250612
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- Elementos del DOM (sin cambios) ---
     const primaryActionBtn = document.getElementById('primary-action-btn');
