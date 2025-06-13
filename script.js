@@ -1,11 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- MODIFICADO: Nuevas constantes para el detector de luminancia ---
-    // Este es el umbral para la SUMA de R+G+B. El máximo es 765 (255+255+255).
-    // Un valor más bajo es más sensible a brillos sutiles.
-    const UMBRAL_SUMA_DE_BRILLO = 650; 
+    // --- MODIFICADO: Constantes de configuración para el detector inteligente ---
+    
+    // 1. UMBRAL DE BRILLO: Exigimos un brillo general alto.
+    // Lo subimos un poco para ser más estrictos. (Máx 765)
+    const UMBRAL_SUMA_DE_BRILLO = 680; 
 
-    // Este sigue siendo el porcentaje del área. Lo mantengo en tu último valor.
-    const AREA_REFLEJO_THRESHOLD = 0.05; 
+    // 2. UMBRAL DE SATURACIÓN: Exigimos que el píxel sea casi blanco/gris.
+    // Es la diferencia máxima permitida entre el componente de color más alto y el más bajo.
+    // Un valor bajo (25-30) es muy estricto.
+    const UMBRAL_SATURACION = 25;
+
+    // 3. UMBRAL DE ÁREA: Mantenemos un área sensible a reflejos pequeños.
+    const AREA_REFLEJO_THRESHOLD = 0.1;
 
     // --- Elementos del DOM (sin cambios) ---
     const primaryActionBtn = document.getElementById('primary-action-btn');
@@ -90,26 +96,32 @@ document.addEventListener('DOMContentLoaded', () => {
         checkOrientation();
     }
 
-    // --- MODIFICADO: La función ahora usa la suma de los componentes de color ---
+    // --- MODIFICADO: La función ahora comprueba brillo Y saturación ---
     function analizarReflejos(canvas) {
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
-        let brightPixels = 0;
+        let glarePixels = 0;
 
         for (let i = 0; i < data.length; i += 4) {
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
-            // Si la suma de los componentes es muy alta, es un píxel brillante.
+            
+            // 1. Comprueba si el píxel es suficientemente brillante
             if ((r + g + b) > UMBRAL_SUMA_DE_BRILLO) {
-                brightPixels++;
+                // 2. Si es brillante, comprueba que no tenga mucho color (baja saturación)
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                if ((max - min) < UMBRAL_SATURACION) {
+                    glarePixels++;
+                }
             }
         }
 
         const totalPixels = canvas.width * canvas.height;
-        const percentage = (brightPixels / totalPixels) * 100;
-        console.log(`Análisis de reflejos: ${percentage.toFixed(2)}% de píxeles brillantes (Umbral: ${AREA_REFLEJO_THRESHOLD}%)`);
+        const percentage = (glarePixels / totalPixels) * 100;
+        console.log(`Análisis de reflejos: ${percentage.toFixed(2)}% de píxeles de reflejo (Umbral: ${AREA_REFLEJO_THRESHOLD}%)`);
         return percentage > AREA_REFLEJO_THRESHOLD;
     }
 
