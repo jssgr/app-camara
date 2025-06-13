@@ -1,12 +1,15 @@
-//jesus@garciarod.com 20250612
-
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Constantes de configuración ---
+    const BRILLO_THRESHOLD = 235; // De 0 a 255. Un píxel se considera "quemado" si todos sus componentes (R,G,B) superan este valor.
+    const AREA_REFLEJO_THRESHOLD = 0.05; // Porcentaje (de 0 a 100). Si más de este % de la imagen son píxeles quemados, se considera reflejo.
+
     // --- Elementos del DOM (sin cambios) ---
     const primaryActionBtn = document.getElementById('primary-action-btn');
     const secondaryActionBtn = document.getElementById('secondary-action-btn');
     const cameraSelect = document.getElementById('cameraSelect');
     const docType = document.getElementById('docType');
     const messageDiv = document.getElementById('message');
+    // ... (el resto de los elementos del DOM sin cambios)
     const rotateOverlay = document.getElementById('rotate-device-overlay');
     const mainControls = document.getElementById('main-controls');
     const finalControls = document.getElementById('final-controls');
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 secondaryActionBtn.textContent = currentState === AppState.FRONT_CAPTURED ? 'Reintentar Frente' : 'Reintentar Reverso';
                 primaryActionBtn.disabled = false;
                 secondaryActionBtn.disabled = false;
-                showMessage(`Verifique la captura del ${currentState === AppState.FRONT_CAPTURED ? 'FRENTE' : 'REVERSO'}.`);
+                // El mensaje se establece después del análisis de reflejos en captureImage()
                 break;
                 
             case AppState.ALL_CAPTURED:
@@ -85,6 +88,31 @@ document.addEventListener('DOMContentLoaded', () => {
         checkOrientation();
     }
 
+    // --- NUEVA FUNCIÓN: Analizador de reflejos ---
+    function analizarReflejos(canvas) {
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        let brightPixels = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            // Si el píxel es muy brillante (casi blanco), contarlo.
+            if (r > BRILLO_THRESHOLD && g > BRILLO_THRESHOLD && b > BRILLO_THRESHOLD) {
+                brightPixels++;
+            }
+        }
+
+        const totalPixels = canvas.width * canvas.height;
+        const percentage = (brightPixels / totalPixels) * 100;
+        console.log(`Análisis de reflejos: ${percentage.toFixed(2)}% de píxeles brillantes.`);
+        return percentage > AREA_REFLEJO_THRESHOLD;
+    }
+
+
+    // --- MODIFICADO: La función captureImage ahora llama al analizador de reflejos ---
     function captureImage(side) {
         if (video.readyState < video.HAVE_METADATA) return;
         const targetCanvas = (side === 'front') ? canvasFront : canvasBack;
@@ -101,8 +129,18 @@ document.addEventListener('DOMContentLoaded', () => {
         targetCanvas.height = cropHeight;
         ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         clearTimeout(systemReadyTimeout);
+        
         currentState = (side === 'front') ? AppState.FRONT_CAPTURED : AppState.BACK_CAPTURED;
-        updateUIForState();
+        updateUIForState(); // Llama a updateUI primero para mostrar botones
+
+        // Ahora, analiza la imagen y muestra un mensaje si es necesario
+        if (analizarReflejos(targetCanvas)) {
+            const sideText = side === 'front' ? 'FRENTE' : 'REVERSO';
+            showMessage(`⚠️ Posible reflejo detectado en la captura del ${sideText}. Intente de nuevo con una luz más suave o un ángulo diferente.`);
+        } else {
+            const sideText = side === 'front' ? 'FRENTE' : 'REVERSO';
+            showMessage(`Verifique la captura del ${sideText}.`);
+        }
     }
 
     // --- Funciones de Soporte (sin cambios) ---
@@ -159,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- MODIFICADO: Se exigen resoluciones mínimas de 1080p y se apunta a 4K ---
     async function startCamera() {
         if (currentStream) {
             currentStream.getTracks().forEach(track => track.stop());
@@ -167,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let constraints;
         const videoConstraints = {
-            width: { min: 1920, ideal: 3840 },    // <--- CAMBIO AQUÍ
-            height: { min: 1080, ideal: 2160 }     // <--- CAMBIO AQUÍ
+            width: { min: 1920, ideal: 3840 },
+            height: { min: 1080, ideal: 2160 }
         };
 
         if (currentState === AppState.INIT) {
@@ -216,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     showMessage("Hubo un problema con tu cámara. Asegúrate de que no esté siendo usada por otra aplicación y recarga la página.");
                     break;
                 case 'OverconstrainedError':
-                     // Mensaje de error actualizado
                      showMessage("La cámara de tu dispositivo no cumple con la resolución mínima requerida (Full HD 1080p).");
                      break;
                 default:
