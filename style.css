@@ -172,8 +172,8 @@ video { width: 100%; display: block; }
     border-color: var(--frame-ready-color);
     box-shadow: 0 0 15px rgba(40, 167, 69, 0.7), 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
-#overlay-box.overlay-ine { aspect-ratio: 86 / 54; width: 85%; }
-#overlay-box.overlay-passport { aspect-ratio: 125 / 88; width: 90%; }
+#overlay-box.overlay-ine { aspect-ratio: 86 / 54; width: 60%; }
+#overlay-box.overlay-passport { aspect-ratio: 125 / 88; width: 63%; }
 
 #previews-container {
     width: 100%;
