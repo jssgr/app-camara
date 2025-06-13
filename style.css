@@ -300,3 +300,17 @@ button.secondary:not(:disabled):hover {
         max-height: 100px;
     }
 }
+/* =========== NUEVO ESTILO PARA EL TEXTO SOBRE EL VIDEO =========== */
+.overlay-text {
+    position: absolute;
+    top: 25%; /* Posición vertical desde arriba */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    text-align: center;
+    width: 80%;
+    font-size: 16px;
+    font-weight: 500;
+    pointer-events: none; /* Para que no interfiera con el video */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Sombra para mejorar la legibilidad */
+}
